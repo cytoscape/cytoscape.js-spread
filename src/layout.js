@@ -228,8 +228,7 @@ SpreadLayout.prototype.run = function() {
      */
     nodes.positions(
       function( i, node ) {
-        var id = node._private.data.id;
-        // var pos = node._private.position;
+        var id = node.id()
         var vertex = vertices[ id ];
 
         return {
