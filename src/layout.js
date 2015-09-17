@@ -1,4 +1,4 @@
-var util, is, Thread;
+var Thread;
 
 var foograph = require('./foograph');
 var Voronoi = require('./rhill-voronoi-core');
@@ -32,7 +32,9 @@ var defaults = {
 };
 
 function SpreadLayout( options ) {
-  this.options = util.extend( {}, defaults, options );
+  var opts = this.options = {};
+  for( var i in defaults ){ opts[i] = defaults[i]; }
+  for( var i in options ){ opts[i] = options[i]; }
 }
 
 function cellCentroid( cell ) {
@@ -71,16 +73,20 @@ function sitesDistance( ls, rs ) {
 SpreadLayout.prototype.run = function() {
 
   var layout = this;
-  // var self = this;
   var options = this.options;
   var cy = options.cy;
-  // var allNodes = cy.nodes();
+
+  var bb = options.boundingBox || { x1: 0, y1: 0, w: cy.width(), h: cy.height() };
+  if( bb.x2 === undefined ){ bb.x2 = bb.x1 + bb.w; }
+  if( bb.w === undefined ){ bb.w = bb.x2 - bb.x1; }
+  if( bb.y2 === undefined ){ bb.y2 = bb.y1 + bb.h; }
+  if( bb.h === undefined ){ bb.h = bb.y2 - bb.y1; }
+
   var nodes = cy.nodes();
-  //var allEdges = cy.edges();
   var edges = cy.edges();
   var cWidth = cy.width();
   var cHeight = cy.height();
-  var simulationBounds = options.boundingBox ? util.makeBoundingBox( options.boundingBox ) : null;
+  var simulationBounds = bb;
   var padding = options.padding;
   var simBBFactor = Math.max( 1, Math.log(nodes.length) * 0.8 );
 
@@ -492,8 +498,6 @@ SpreadLayout.prototype.destroy = function(){
 };
 
 module.exports = function get( cytoscape ){
-  util = cytoscape.util;
-  is = cytoscape.is;
   Thread = cytoscape.Thread;
 
   return SpreadLayout;
