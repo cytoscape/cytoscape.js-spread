@@ -3,7 +3,7 @@
 var packageJson = JSON.parse(Npm.require("fs").readFileSync('package.json'));
 
 Package.describe({
-  name: 'cytoscape:cytoscape-spread',
+  name: 'maxkfranz:cytoscape-spread',
   version: packageJson.version,
   summary: packageJson.description,
   git: packageJson.repository.url,
