@@ -37,39 +37,6 @@ function SpreadLayout( options ) {
   for( var i in options ){ opts[i] = options[i]; }
 }
 
-function cellCentroid( cell ) {
-  var hes = cell.halfedges;
-  var area = 0,
-    x = 0,
-    y = 0;
-  var p1, p2, f;
-
-  for( var i = 0; i < hes.length; ++i ) {
-    p1 = hes[ i ].getEndpoint();
-    p2 = hes[ i ].getStartpoint();
-
-    area += p1.x * p2.y;
-    area -= p1.y * p2.x;
-
-    f = p1.x * p2.y - p2.x * p1.y;
-    x += ( p1.x + p2.x ) * f;
-    y += ( p1.y + p2.y ) * f;
-  }
-
-  area /= 2;
-  f = area * 6;
-  return {
-    x: x / f,
-    y: y / f
-  };
-}
-
-function sitesDistance( ls, rs ) {
-  var dx = ls.x - rs.x;
-  var dy = ls.y - rs.y;
-  return Math.sqrt( dx * dx + dy * dy );
-}
-
 SpreadLayout.prototype.run = function() {
 
   var layout = this;
@@ -202,11 +169,7 @@ SpreadLayout.prototype.run = function() {
     //EXTERNAL 1
     t1.require( foograph, 'foograph' );
     //EXTERNAL 2
-    t1.require( Voronoi );
-
-    //Local function
-    t1.require( sitesDistance );
-    t1.require( cellCentroid );
+    t1.require( Voronoi, 'Voronoi' );
   }
 
   function setPositions( pData ){ //console.log('set posns')
@@ -264,6 +227,39 @@ SpreadLayout.prototype.run = function() {
   layout.one( "layoutready", options.ready );
 
   t1.pass( pData ).run( function( pData ) {
+
+    function cellCentroid( cell ) {
+      var hes = cell.halfedges;
+      var area = 0,
+        x = 0,
+        y = 0;
+      var p1, p2, f;
+
+      for( var i = 0; i < hes.length; ++i ) {
+        p1 = hes[ i ].getEndpoint();
+        p2 = hes[ i ].getStartpoint();
+
+        area += p1.x * p2.y;
+        area -= p1.y * p2.x;
+
+        f = p1.x * p2.y - p2.x * p1.y;
+        x += ( p1.x + p2.x ) * f;
+        y += ( p1.y + p2.y ) * f;
+      }
+
+      area /= 2;
+      f = area * 6;
+      return {
+        x: x / f,
+        y: y / f
+      };
+    }
+
+    function sitesDistance( ls, rs ) {
+      var dx = ls.x - rs.x;
+      var dy = ls.y - rs.y;
+      return Math.sqrt( dx * dx + dy * dy );
+    }
 
     foograph = eval('foograph');
     Voronoi = eval('Voronoi');
