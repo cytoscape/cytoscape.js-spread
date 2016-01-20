@@ -408,14 +408,16 @@ SpreadLayout.prototype.run = function() {
         diagram = voronoi.compute( fv, bbox );
 
         // Then we reposition the nodes at the centroid of their Voronoi cells
-        cells = diagram.cells;
-        for( var i = 0; i < cells.length; ++i ) {
-          var cell = cells[ i ];
-          var site = cell.site;
-          var centroid = cellCentroid( cell );
-          var currv = vSites[ site.label ];
-          currv.x = centroid.x;
-          currv.y = centroid.y;
+        if( maxExpIt > 0 ){
+          cells = diagram.cells;
+          for( var i = 0; i < cells.length; ++i ) {
+            var cell = cells[ i ];
+            var site = cell.site;
+            var centroid = cellCentroid( cell );
+            var currv = vSites[ site.label ];
+            currv.x = centroid.x;
+            currv.y = centroid.y;
+          }
         }
       }
 
