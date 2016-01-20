@@ -1,6 +1,6 @@
 {
   "name": "cytoscape-spread",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "The Spread physics simulation layout for Cytoscape.js",
   "main": "cytoscape-spread.js",
   "spm": {

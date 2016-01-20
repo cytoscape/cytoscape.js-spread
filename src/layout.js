@@ -338,7 +338,11 @@ SpreadLayout.prototype.run = function() {
 
     savePositions();
     messagePositions();
-return;
+
+    if( lMaxExpIt <= 0 ){
+      return pData;
+    }
+
     /*
      * SECOND STEP: Tiding up of the graph.
      *
