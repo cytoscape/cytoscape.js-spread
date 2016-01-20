@@ -329,6 +329,7 @@ SpreadLayout.prototype.run = function() {
     var frLayoutManager = new foograph.ForceDirectedVertexLayout( lWidth, lHeight, iterations, false, lMinDist );
 
     frLayoutManager.callback = function(){
+      console.log( arguments )
       savePositions();
       messagePositions();
     };
@@ -337,7 +338,7 @@ SpreadLayout.prototype.run = function() {
 
     savePositions();
     messagePositions();
-
+return;
     /*
      * SECOND STEP: Tiding up of the graph.
      *
@@ -394,7 +395,7 @@ SpreadLayout.prototype.run = function() {
     var prevInfractions = checkMinDist( diagram.edges );
     //console.info("Initial infractions " + prevInfractions);
 
-    var bStop = ( prevInfractions <= 0 );
+    var bStop = ( prevInfractions <= 0 ) || lMaxExpIt <= 0;
 
     var voronoiIteration = 0;
     var expandIteration = 0;
@@ -408,16 +409,14 @@ SpreadLayout.prototype.run = function() {
         diagram = voronoi.compute( fv, bbox );
 
         // Then we reposition the nodes at the centroid of their Voronoi cells
-        if( lMaxExpIt > 0 ){
-          cells = diagram.cells;
-          for( var i = 0; i < cells.length; ++i ) {
-            var cell = cells[ i ];
-            var site = cell.site;
-            var centroid = cellCentroid( cell );
-            var currv = vSites[ site.label ];
-            currv.x = centroid.x;
-            currv.y = centroid.y;
-          }
+        // cells = diagram.cells;
+        for( var i = 0; i < cells.length; ++i ) {
+          var cell = cells[ i ];
+          var site = cell.site;
+          var centroid = cellCentroid( cell );
+          var currv = vSites[ site.label ];
+          currv.x = centroid.x;
+          currv.y = centroid.y;
         }
       }
 
