@@ -329,7 +329,6 @@ SpreadLayout.prototype.run = function() {
     var frLayoutManager = new foograph.ForceDirectedVertexLayout( lWidth, lHeight, iterations, false, lMinDist );
 
     frLayoutManager.callback = function(){
-      console.log( arguments )
       savePositions();
       messagePositions();
     };
