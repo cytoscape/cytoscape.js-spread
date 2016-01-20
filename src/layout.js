@@ -408,7 +408,7 @@ SpreadLayout.prototype.run = function() {
         diagram = voronoi.compute( fv, bbox );
 
         // Then we reposition the nodes at the centroid of their Voronoi cells
-        if( maxExpIt > 0 ){
+        if( lMaxExpIt > 0 ){
           cells = diagram.cells;
           for( var i = 0; i < cells.length; ++i ) {
             var cell = cells[ i ];
