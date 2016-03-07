@@ -13,7 +13,7 @@ The layout makes use of [foograph.js](https://code.google.com/p/foograph/) and [
 
 ## Dependencies
 
- * Cytoscape.js >= 2.4.0
+ * Cytoscape.js >= 2.5.0
 
 
 ## Usage instructions

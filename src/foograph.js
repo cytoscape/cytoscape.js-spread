@@ -1,4 +1,4 @@
-var foograph = {
+window.foograph = {
   /**
    * Insert a vertex into this graph.
    *

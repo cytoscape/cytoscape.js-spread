@@ -261,8 +261,8 @@ SpreadLayout.prototype.run = function() {
       return Math.sqrt( dx * dx + dy * dy );
     }
 
-    foograph = eval('foograph');
-    Voronoi = eval('Voronoi');
+    foograph = _ref_('foograph');
+    Voronoi = _ref_('Voronoi');
 
     // I need to retrieve the important data
     var lWidth = pData[ 'width' ];
