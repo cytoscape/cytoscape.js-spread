@@ -19,6 +19,7 @@ var version;
 
 var browserifyOpts = {
   entries: './src/index.js',
+  standalone: 'cytoscape-spread',
   debug: true
 };
 
