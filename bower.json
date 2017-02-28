@@ -1,6 +1,5 @@
 {
   "name": "cytoscape-spread",
-  "version": "1.2.0",
   "description": "The Spread physics simulation layout for Cytoscape.js",
   "main": "cytoscape-spread.js",
   "repository": {
@@ -20,6 +19,6 @@
   ],
   "license": "LGPL-3.0+",
   "dependencies": {
-    "cytoscape": "^2.5.0"
+    "cytoscape": "^2.5.0 || ^3.0.0"
   }
 }
