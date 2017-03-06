@@ -792,24 +792,15 @@ var register = function( cytoscape ){
   cytoscape('layout', 'spread', layout);
 };
 
-if( typeof module !== 'undefined' && module.exports ){ // expose as a commonjs module
-  module.exports = function( cytoscape ){
-    var weaver = require('weaverjs');
-    register( cytoscape );
-  };
-}
-
-if( typeof define !== 'undefined' && define.amd ){ // expose as an amd/requirejs module
-  define('cytoscape-spread', function(){
-    return register;
-  });
-}
-
-if( ( typeof cytoscape !== 'undefined' ) && ( typeof weaver !== 'undefined' ) ){ // expose to global cytoscape (i.e. window.cytoscape)
+if( typeof cytoscape !== 'undefined' ){ // expose to global cytoscape (i.e. window.cytoscape)
   register( cytoscape );
 }
 
+module.exports = register;
+
 },{"./layout":3}],3:[function(_dereq_,module,exports){
+var Thread;
+
 var foograph = _dereq_('./foograph');
 var Voronoi = _dereq_('./rhill-voronoi-core');
 
@@ -939,39 +930,41 @@ SpreadLayout.prototype.run = function() {
     'maxFruchtermanReingoldIterations': options.maxFruchtermanReingoldIterations
   };
 
-  for(var i = nodes.length - 1; i >= 0 ; i--) {
-    var nodeId = nodes[i].id();
-    var pos = nodes[i].position();
+  nodes.each(
+    function( i, node ) {
+      var nodeId = node.id();
+      var pos = node.position();
 
-    if( options.randomize ){
-      pos = {
-        x: Math.round( simBB.x1 + (simBB.x2 - simBB.x1) * Math.random() ),
-        y: Math.round( simBB.y1 + (simBB.y2 - simBB.y1) * Math.random() )
-      };
-    }
+      if( options.randomize ){
+        pos = {
+          x: Math.round( simBB.x1 + (simBB.x2 - simBB.x1) * Math.random() ),
+          y: Math.round( simBB.y1 + (simBB.y2 - simBB.y1) * Math.random() )
+        };
+      }
 
-    pData[ 'vertices' ].push( {
-      id: nodeId,
-      x: pos.x,
-      y: pos.y
+      pData[ 'vertices' ].push( {
+        id: nodeId,
+        x: pos.x,
+        y: pos.y
+      } );
     } );
-  }
 
-  for(var i = edges.length - 1; i >= 0; i--) {
-    var srcNodeId = edges[i].source().id();
-    var tgtNodeId = edges[i].target().id();
-    pData[ 'edges' ].push( {
-      src: srcNodeId,
-      tgt: tgtNodeId
+  edges.each(
+    function() {
+      var srcNodeId = this.source().id();
+      var tgtNodeId = this.target().id();
+      pData[ 'edges' ].push( {
+        src: srcNodeId,
+        tgt: tgtNodeId
+      } );
     } );
-  }
 
   //Decleration
   var t1 = layout.thread;
 
   // reuse old thread if possible
   if( !t1 || t1.stopped() ){
-    t1 = layout.thread = weaver.thread();
+    t1 = layout.thread = Thread();
 
     // And to add the required scripts
     //EXTERNAL 1
@@ -998,11 +991,7 @@ SpreadLayout.prototype.run = function() {
      * We position the nodes based on the calculation
      */
     nodes.positions(
-      function( node, i ) {
-        // Perform 2.x and 1.x backwards compatibility check
-        if( typeof node === "number" ){
-          node = i;
-        }
+      function( i, node ) {
         var id = node.id()
         var vertex = vertices[ id ];
 
@@ -1309,6 +1298,8 @@ SpreadLayout.prototype.destroy = function(){
 };
 
 module.exports = function get( cytoscape ){
+  Thread = cytoscape.Thread;
+
   return SpreadLayout;
 };
 
