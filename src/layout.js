@@ -129,34 +129,32 @@ SpreadLayout.prototype.run = function() {
     'maxFruchtermanReingoldIterations': options.maxFruchtermanReingoldIterations
   };
 
-  nodes.each(
-    function( i, node ) {
-      var nodeId = node.id();
-      var pos = node.position();
+  for(var i = nodes.length - 1; i >= 0 ; i--) {
+    var nodeId = nodes[i].id();
+    var pos = nodes[i].position();
 
-      if( options.randomize ){
-        pos = {
-          x: Math.round( simBB.x1 + (simBB.x2 - simBB.x1) * Math.random() ),
-          y: Math.round( simBB.y1 + (simBB.y2 - simBB.y1) * Math.random() )
-        };
-      }
+    if( options.randomize ){
+      pos = {
+        x: Math.round( simBB.x1 + (simBB.x2 - simBB.x1) * Math.random() ),
+        y: Math.round( simBB.y1 + (simBB.y2 - simBB.y1) * Math.random() )
+      };
+    }
 
-      pData[ 'vertices' ].push( {
-        id: nodeId,
-        x: pos.x,
-        y: pos.y
-      } );
+    pData[ 'vertices' ].push( {
+      id: nodeId,
+      x: pos.x,
+      y: pos.y
     } );
+  };
 
-  edges.each(
-    function() {
-      var srcNodeId = this.source().id();
-      var tgtNodeId = this.target().id();
-      pData[ 'edges' ].push( {
-        src: srcNodeId,
-        tgt: tgtNodeId
-      } );
+  for(var i = edges.length - 1; i >= 0; i--) {
+    var srcNodeId = edges[i].source().id();
+    var tgtNodeId = edges[i].target().id();
+    pData[ 'edges' ].push( {
+      src: srcNodeId,
+      tgt: tgtNodeId
     } );
+  };
 
   //Decleration
   var t1 = layout.thread;
@@ -190,7 +188,11 @@ SpreadLayout.prototype.run = function() {
      * We position the nodes based on the calculation
      */
     nodes.positions(
-      function( i, node ) {
+      function( node, i ) {
+        // Perform 2.x and 1.x backwards compatibility check
+        if( typeof node === "number" ){
+          node = i;
+        }
         var id = node.id()
         var vertex = vertices[ id ];
 
@@ -496,8 +498,8 @@ SpreadLayout.prototype.destroy = function(){
   }
 };
 
-module.exports = function get( cytoscape ){
-  Thread = cytoscape.Thread;
+module.exports = function get( cytoscape, weaver ){
+  Thread = weaver.Thread;
 
   return SpreadLayout;
 };
