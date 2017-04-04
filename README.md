@@ -14,6 +14,7 @@ The layout makes use of [foograph.js](https://code.google.com/p/foograph/) and [
 ## Dependencies
 
  * Cytoscape.js ^2.5.0 || ^3.0.0
+ * Weaver.js ^1.2.0
 
 
 ## Usage instructions
@@ -35,12 +36,12 @@ spread( cytoscape ); // register extension
 
 AMD:
 ```js
-require(['cytoscape', 'cytoscape-spread'], function( cytoscape, spread ){
-  spread( cytoscape ); // register extension
+require(['cytoscape', 'cytoscape-spread', 'weaverjs'], function( cytoscape, spread, weaver ){
+  spread( cytoscape, weaver ); // register extension
 });
 ```
 
-Plain HTML/JS has the extension registered for you automatically, because no `require()` is needed.
+Plain HTML/JS has the extension registered for you automatically, because no `require()` is needed. However, the weaverjs library must be included as well.
 
 
 ## API
