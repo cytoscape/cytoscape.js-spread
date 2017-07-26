@@ -1,6 +1,6 @@
 cytoscape-spread
 ================================================================================
-
+[![DOI](https://zenodo.org/badge/42206822.svg)](https://zenodo.org/badge/latestdoi/42206822)
 
 ## Description
 
@@ -76,3 +76,4 @@ This project is set up to automatically be published to npm and bower.  To publi
 1. Set the version number environment variable: `export VERSION=1.2.3`
 1. Publish: `gulp publish`
 1. If publishing to bower for the first time, you'll need to run `bower register cytoscape-spread https://github.com/cytoscape/cytoscape.js-spread.git`
+1. Make a release on GitHub to automatically register a new Zenodo DOI
