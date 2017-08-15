@@ -205,8 +205,6 @@ SpreadLayout.prototype.run = function() {
     if( options.fit ) {
       cy.fit( options.padding );
     }
-
-    cy.nodes().rtrigger( "position" );
   }
 
   var didLayoutReady = false;
