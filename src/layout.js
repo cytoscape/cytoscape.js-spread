@@ -1,20 +1,9 @@
 var Thread;
 
-var foograph = require('./foograph');
 var Voronoi = require('./rhill-voronoi-core');
 
-/*
- * This layout combines several algorithms:
- *
- * - It generates an initial position of the nodes by using the
- *   Fruchterman-Reingold algorithm (doi:10.1002/spe.4380211102)
- *
- * - Finally it eliminates overlaps by using the method described by
- *   Gansner and North (doi:10.1007/3-540-37623-2_28)
- */
-
 var defaults = {
-  animate: true, // whether to show the layout as it's running
+  animate: true, // Whether to show the layout as it's running
   ready: undefined, // Callback on layoutready
   stop: undefined, // Callback on layoutstop
   fit: true, // Reset viewport to fit default simulationBounds
@@ -25,10 +14,10 @@ var defaults = {
   // If it is set to -1.0 the amount of expansion is automatically
   // calculated based on the minDist, the aspect ratio and the
   // number of nodes
-  maxFruchtermanReingoldIterations: 50, // Maximum number of initial force-directed iterations
+  prelayout: { name: 'cose' }, // Layout options for the first phase
   maxExpandIterations: 4, // Maximum number of expanding iterations
   boundingBox: undefined, // Constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
-  randomize: false // uses random initial node positions on true
+  randomize: false // Uses random initial node positions on true
 };
 
 function SpreadLayout( options ) {
@@ -125,8 +114,7 @@ SpreadLayout.prototype.run = function() {
     'maxExpIt': options.maxExpandIterations,
     'vertices': [],
     'edges': [],
-    'startTime': startTime,
-    'maxFruchtermanReingoldIterations': options.maxFruchtermanReingoldIterations
+    'startTime': startTime
   };
 
   for(var i = nodes.length - 1; i >= 0 ; i--) {
@@ -164,9 +152,6 @@ SpreadLayout.prototype.run = function() {
     t1 = layout.thread = Thread();
 
     // And to add the required scripts
-    //EXTERNAL 1
-    t1.require( foograph, 'foograph' );
-    //EXTERNAL 2
     t1.require( Voronoi, 'Voronoi' );
   }
 
@@ -226,257 +211,260 @@ SpreadLayout.prototype.run = function() {
 
   layout.one( "layoutready", options.ready );
 
-  t1.pass( pData ).run( function( pData ) {
+  if( options.prelayout ){
+    var prelayout = cy.makeLayout( options.prelayout );
+    var promise = prelayout.promiseOn('layoutstop');
 
-    function cellCentroid( cell ) {
-      var hes = cell.halfedges;
-      var area = 0,
-        x = 0,
-        y = 0;
-      var p1, p2, f;
+    promise.then( runVoronoi );
 
-      for( var i = 0; i < hes.length; ++i ) {
-        p1 = hes[ i ].getEndpoint();
-        p2 = hes[ i ].getStartpoint();
+    prelayout.run();
+  } else {
+    runVoronoi();
+  }
 
-        area += p1.x * p2.y;
-        area -= p1.y * p2.x;
+  function runVoronoi(){
+    t1.pass( pData ).run( function( pData ) {
 
-        f = p1.x * p2.y - p2.x * p1.y;
-        x += ( p1.x + p2.x ) * f;
-        y += ( p1.y + p2.y ) * f;
+      function cellCentroid( cell ) {
+        var hes = cell.halfedges;
+        var area = 0,
+          x = 0,
+          y = 0;
+        var p1, p2, f;
+
+        for( var i = 0; i < hes.length; ++i ) {
+          p1 = hes[ i ].getEndpoint();
+          p2 = hes[ i ].getStartpoint();
+
+          area += p1.x * p2.y;
+          area -= p1.y * p2.x;
+
+          f = p1.x * p2.y - p2.x * p1.y;
+          x += ( p1.x + p2.x ) * f;
+          y += ( p1.y + p2.y ) * f;
+        }
+
+        area /= 2;
+        f = area * 6;
+        return {
+          x: x / f,
+          y: y / f
+        };
       }
 
-      area /= 2;
-      f = area * 6;
-      return {
-        x: x / f,
-        y: y / f
+      function sitesDistance( ls, rs ) {
+        var dx = ls.x - rs.x;
+        var dy = ls.y - rs.y;
+        return Math.sqrt( dx * dx + dy * dy );
+      }
+
+      Voronoi = _ref_('Voronoi');
+
+      // I need to retrieve the important data
+      var lWidth = pData[ 'width' ];
+      var lHeight = pData[ 'height' ];
+      var lMinDist = pData[ 'minDist' ];
+      var lExpFact = pData[ 'expFact' ];
+      var lMaxExpIt = pData[ 'maxExpIt' ];
+
+      // Prepare the data to output
+      var savePositions = function(){
+        pData[ 'width' ] = lWidth;
+        pData[ 'height' ] = lHeight;
+        pData[ 'expIt' ] = expandIteration;
+        pData[ 'expFact' ] = lExpFact;
+
+        pData[ 'vertices' ] = [];
+        for( var i = 0; i < fv.length; ++i ) {
+          pData[ 'vertices' ].push( {
+            id: fv[ i ].label,
+            x: fv[ i ].x,
+            y: fv[ i ].y
+          } );
+        }
       };
-    }
 
-    function sitesDistance( ls, rs ) {
-      var dx = ls.x - rs.x;
-      var dy = ls.y - rs.y;
-      return Math.sqrt( dx * dx + dy * dy );
-    }
+      var messagePositions = function(){
+        broadcast( pData );
+      };
 
-    foograph = _ref_('foograph');
-    Voronoi = _ref_('Voronoi');
+      var dataVertices = pData[ 'vertices' ];
+      var dataEdges = pData[ 'edges' ];
 
-    // I need to retrieve the important data
-    var lWidth = pData[ 'width' ];
-    var lHeight = pData[ 'height' ];
-    var lMinDist = pData[ 'minDist' ];
-    var lExpFact = pData[ 'expFact' ];
-    var lMaxExpIt = pData[ 'maxExpIt' ];
-    var lMaxFruchtermanReingoldIterations = pData[ 'maxFruchtermanReingoldIterations' ];
+      var x1 = Infinity;
+      var x2 = -Infinity;
+      var y1 = Infinity;
+      var y2 = -Infinity;
 
-    // Prepare the data to output
-    var savePositions = function(){
-      pData[ 'width' ] = lWidth;
-      pData[ 'height' ] = lHeight;
-      pData[ 'expIt' ] = expandIteration;
-      pData[ 'expFact' ] = lExpFact;
+      dataVertices.forEach(function(v){
+        x1 = Math.min( v.x, x1 );
+        x2 = Math.max( v.x, x2 );
+        y1 = Math.min( v.y, y1 );
+        y2 = Math.max( v.y, y2 );
+      });
 
-      pData[ 'vertices' ] = [];
-      for( var i = 0; i < fv.length; ++i ) {
-        pData[ 'vertices' ].push( {
-          id: fv[ i ].label,
-          x: fv[ i ].x,
-          y: fv[ i ].y
-        } );
-      }
-    };
+      var scale = function(x, minX, maxX, scaledMinX, scaledMaxX){
+        var p = (x - minX) / (maxX - minX);
 
-    var messagePositions = function(){
-      broadcast( pData );
-    };
+        if( isNaN(p) ){
+          p = Math.random();
+        }
 
-    /*
-     * FIRST STEP: Application of the Fruchterman-Reingold algorithm
-     *
-     * We use the version implemented by the foograph library
-     *
-     * Ref.: https://code.google.com/p/foograph/
-     */
+        return scaledMinX + (scaledMaxX - scaledMinX) * p;
+      };
 
-    // We need to create an instance of a graph compatible with the library
-    var frg = new foograph.Graph( "FRgraph", false );
+      // NB Voronoi expects all nodes to be on { x in [0, lWidth], y in [0, lHeight] }
+      var fv = dataVertices.map(function(v){
+        return {
+          label: v.id,
+          x: scale( v.x, x1, x2, 0, lWidth ),
+          y: scale( v.y, y1, y2, 0, lHeight )
+        };
+      });
 
-    var frgNodes = {};
-
-    // Then we have to add the vertices
-    var dataVertices = pData[ 'vertices' ];
-    for( var ni = 0; ni < dataVertices.length; ++ni ) {
-      var id = dataVertices[ ni ][ 'id' ];
-      var v = new foograph.Vertex( id, Math.round( Math.random() * lHeight ), Math.round( Math.random() * lHeight ) );
-      frgNodes[ id ] = v;
-      frg.insertVertex( v );
-    }
-
-    var dataEdges = pData[ 'edges' ];
-    for( var ei = 0; ei < dataEdges.length; ++ei ) {
-      var srcNodeId = dataEdges[ ei ][ 'src' ];
-      var tgtNodeId = dataEdges[ ei ][ 'tgt' ];
-      frg.insertEdge( "", 1, frgNodes[ srcNodeId ], frgNodes[ tgtNodeId ] );
-    }
-
-    var fv = frg.vertices;
-
-    // Then we apply the layout
-    var iterations = lMaxFruchtermanReingoldIterations;
-    var frLayoutManager = new foograph.ForceDirectedVertexLayout( lWidth, lHeight, iterations, false, lMinDist );
-
-    frLayoutManager.callback = function(){
       savePositions();
       messagePositions();
-    };
 
-    frLayoutManager.layout( frg );
-
-    savePositions();
-    messagePositions();
-
-    if( lMaxExpIt <= 0 ){
-      return pData;
-    }
-
-    /*
-     * SECOND STEP: Tiding up of the graph.
-     *
-     * We use the method described by Gansner and North, based on Voronoi
-     * diagrams.
-     *
-     * Ref: doi:10.1007/3-540-37623-2_28
-     */
-
-    // We calculate the Voronoi diagram dor the position of the nodes
-    var voronoi = new Voronoi();
-    var bbox = {
-      xl: 0,
-      xr: lWidth,
-      yt: 0,
-      yb: lHeight
-    };
-    var vSites = [];
-    for( var i = 0; i < fv.length; ++i ) {
-      vSites[ fv[ i ].label ] = fv[ i ];
-    }
-
-    function checkMinDist( ee ) {
-      var infractions = 0;
-      // Then we check if the minimum distance is satisfied
-      for( var eei = 0; eei < ee.length; ++eei ) {
-        var e = ee[ eei ];
-        if( ( e.lSite != null ) && ( e.rSite != null ) && sitesDistance( e.lSite, e.rSite ) < lMinDist ) {
-          ++infractions;
-        }
-      }
-      return infractions;
-    }
-
-    var diagram = voronoi.compute( fv, bbox );
-
-    // Then we reposition the nodes at the centroid of their Voronoi cells
-    var cells = diagram.cells;
-    for( var i = 0; i < cells.length; ++i ) {
-      var cell = cells[ i ];
-      var site = cell.site;
-      var centroid = cellCentroid( cell );
-      var currv = vSites[ site.label ];
-      currv.x = centroid.x;
-      currv.y = centroid.y;
-    }
-
-    if( lExpFact < 0.0 ) {
-      // Calculates the expanding factor
-      lExpFact = Math.max( 0.05, Math.min( 0.10, lMinDist / Math.sqrt( ( lWidth * lHeight ) / fv.length ) * 0.5 ) );
-      //console.info("Expanding factor is " + (options.expandingFactor * 100.0) + "%");
-    }
-
-    var prevInfractions = checkMinDist( diagram.edges );
-    //console.info("Initial infractions " + prevInfractions);
-
-    var bStop = ( prevInfractions <= 0 ) || lMaxExpIt <= 0;
-
-    var voronoiIteration = 0;
-    var expandIteration = 0;
-
-    // var initWidth = lWidth;
-
-    while( !bStop ) {
-      ++voronoiIteration;
-      for( var it = 0; it <= 4; ++it ) {
-        voronoi.recycle( diagram );
-        diagram = voronoi.compute( fv, bbox );
-
-        // Then we reposition the nodes at the centroid of their Voronoi cells
-        // cells = diagram.cells;
-        for( var i = 0; i < cells.length; ++i ) {
-          var cell = cells[ i ];
-          var site = cell.site;
-          var centroid = cellCentroid( cell );
-          var currv = vSites[ site.label ];
-          currv.x = centroid.x;
-          currv.y = centroid.y;
-        }
+      if( lMaxExpIt <= 0 ){
+        return pData;
       }
 
-      var currInfractions = checkMinDist( diagram.edges );
-      //console.info("Current infractions " + currInfractions);
+      /*
+       * SECOND STEP: Tiding up of the graph.
+       *
+       * We use the method described by Gansner and North, based on Voronoi
+       * diagrams.
+       *
+       * Ref: doi:10.1007/3-540-37623-2_28
+       */
 
-      if( currInfractions <= 0 ) {
-        bStop = true;
-      } else {
-        if( currInfractions >= prevInfractions || voronoiIteration >= 4 ) {
-          if( expandIteration >= lMaxExpIt ) {
-            bStop = true;
-          } else {
-            lWidth += lWidth * lExpFact;
-            lHeight += lHeight * lExpFact;
-            bbox = {
-              xl: 0,
-              xr: lWidth,
-              yt: 0,
-              yb: lHeight
-            };
-            ++expandIteration;
-            voronoiIteration = 0;
-            //console.info("Expanded to ("+width+","+height+")");
+      // We calculate the Voronoi diagram dor the position of the nodes
+      var voronoi = new Voronoi();
+      var bbox = {
+        xl: 0,
+        xr: lWidth,
+        yt: 0,
+        yb: lHeight
+      };
+      var vSites = [];
+      for( var i = 0; i < fv.length; ++i ) {
+        vSites[ fv[ i ].label ] = fv[ i ];
+      }
+
+      function checkMinDist( ee ) {
+        var infractions = 0;
+        // Then we check if the minimum distance is satisfied
+        for( var eei = 0; eei < ee.length; ++eei ) {
+          var e = ee[ eei ];
+          if( ( e.lSite != null ) && ( e.rSite != null ) && sitesDistance( e.lSite, e.rSite ) < lMinDist ) {
+            ++infractions;
           }
         }
+        return infractions;
       }
-      prevInfractions = currInfractions;
+
+      var diagram = voronoi.compute( fv, bbox );
+
+      // Then we reposition the nodes at the centroid of their Voronoi cells
+      var cells = diagram.cells;
+      for( var i = 0; i < cells.length; ++i ) {
+        var cell = cells[ i ];
+        var site = cell.site;
+        var centroid = cellCentroid( cell );
+        var currv = vSites[ site.label ];
+        currv.x = centroid.x;
+        currv.y = centroid.y;
+      }
+
+      if( lExpFact < 0.0 ) {
+        // Calculates the expanding factor
+        lExpFact = Math.max( 0.05, Math.min( 0.10, lMinDist / Math.sqrt( ( lWidth * lHeight ) / fv.length ) * 0.5 ) );
+        //console.info("Expanding factor is " + (options.expandingFactor * 100.0) + "%");
+      }
+
+      var prevInfractions = checkMinDist( diagram.edges );
+      //console.info("Initial infractions " + prevInfractions);
+
+      var bStop = ( prevInfractions <= 0 ) || lMaxExpIt <= 0;
+
+      var voronoiIteration = 0;
+      var expandIteration = 0;
+
+      // var initWidth = lWidth;
+
+      while( !bStop ) {
+        ++voronoiIteration;
+        for( var it = 0; it <= 4; ++it ) {
+          voronoi.recycle( diagram );
+          diagram = voronoi.compute( fv, bbox );
+
+          // Then we reposition the nodes at the centroid of their Voronoi cells
+          // cells = diagram.cells;
+          for( var i = 0; i < cells.length; ++i ) {
+            var cell = cells[ i ];
+            var site = cell.site;
+            var centroid = cellCentroid( cell );
+            var currv = vSites[ site.label ];
+            currv.x = centroid.x;
+            currv.y = centroid.y;
+          }
+        }
+
+        var currInfractions = checkMinDist( diagram.edges );
+        //console.info("Current infractions " + currInfractions);
+
+        if( currInfractions <= 0 ) {
+          bStop = true;
+        } else {
+          if( currInfractions >= prevInfractions || voronoiIteration >= 4 ) {
+            if( expandIteration >= lMaxExpIt ) {
+              bStop = true;
+            } else {
+              lWidth += lWidth * lExpFact;
+              lHeight += lHeight * lExpFact;
+              bbox = {
+                xl: 0,
+                xr: lWidth,
+                yt: 0,
+                yb: lHeight
+              };
+              ++expandIteration;
+              voronoiIteration = 0;
+              //console.info("Expanded to ("+width+","+height+")");
+            }
+          }
+        }
+        prevInfractions = currInfractions;
+
+        savePositions();
+        messagePositions();
+      }
 
       savePositions();
-      messagePositions();
-    }
+      return pData;
 
-    savePositions();
-    return pData;
+    } ).then( function( pData ) {
+      // var expandIteration = pData[ 'expIt' ];
+      var dataVertices = pData[ 'vertices' ];
 
-  } ).then( function( pData ) {
-    // var expandIteration = pData[ 'expIt' ];
-    var dataVertices = pData[ 'vertices' ];
+      setPositions( pData );
 
-    setPositions( pData );
+      // Get end time
+      var startTime = pData[ 'startTime' ];
+      var endTime = new Date();
+      console.info( "Layout on " + dataVertices.length + " nodes took " + ( endTime - startTime ) + " ms" );
 
-    // Get end time
-    var startTime = pData[ 'startTime' ];
-    var endTime = new Date();
-    console.info( "Layout on " + dataVertices.length + " nodes took " + ( endTime - startTime ) + " ms" );
+      layout.one( "layoutstop", options.stop );
 
-    layout.one( "layoutstop", options.stop );
+      if( !options.animate ){
+        layout.trigger( "layoutready" );
+      }
 
-    if( !options.animate ){
-      layout.trigger( "layoutready" );
-    }
+      layout.trigger( "layoutstop" );
 
-    layout.trigger( "layoutstop" );
-
-    t1.stop();
-  } );
+      t1.stop();
+    } );
+  }
 
 
   return this;

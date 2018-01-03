@@ -8,8 +8,37 @@ The Spread physics simulation layout for Cytoscape.js
 
 The spread layout uses a force-directed physics simulation with several external libraries.  The layout tries to keep elements spread out evenly, making good use of constrained space.
 
-The layout makes use of [foograph.js](https://code.google.com/p/foograph/) (LGPL) and [rhill-voronoi-core.js](https://github.com/gorhill/Javascript-Voronoi) (MIT).  They are bundled for you.
+The layout makes use of [CoSE](http://js.cytoscape.org/#layouts/cose) (MIT) and [`rhill-voronoi-core.js`](https://github.com/gorhill/Javascript-Voronoi) (MIT).  CoSE is already bundled in Cytoscape.js, and `rhill-voronoi-core.js` is bundled in `cytoscape-spread`.
 
+There are two phases to this layout:
+
+(1) A force-directed layout provides initial positions for the nodes.  By default, the embedded version of CoSE is used, because it is fast and because it does not increase your app's bundle size any more than using Cytoscape.js itself.  You can use an alternative layout by specifying `options.prelayout` with the layout options you want to use for the first phase (e.g. `{ name: 'grid' }`).  Alternatively, you can specify `options.prelayout: false` (falsey) to just use the node's existing positions for the first phase.
+
+(2) Voronoi is used to spread out the nodes in the remaining space.
+
+Note that since you are composing layouts with phase (1), where `options.prelayout` is non-falsey, you will have more layout events.  For example, you will have more than one `layoutstop` event -- one for the Spread layout overall and one for the prelayout within phase (1) of Spread.  
+
+If you skip phase (1) with `options.prelayout` falsey, you will not get extra events within Spread.  You can use promise chaining with two layouts to get the same effect as running a layout in phase (1), i.e.:
+
+```js
+var layout1 = cy.makeLayout({ name: 'cose' });
+var layout2 = cy.makeLayout({ name: 'spread', prelayout: false });
+
+var run = function(l){
+  var p = l.promiseOn('layoutstop');
+
+  l.run();
+
+  return p;
+};
+
+(
+  Promise.resolve()
+  .then(function(){ return run(layout1); })
+  .then(function(){ return run(layout2); })
+  .then(function(){ console.log('done 1 and 2') })
+);
+```
 
 ## Dependencies
 
@@ -50,7 +79,7 @@ Call the layout, e.g. `cy.layout({ name: 'spread', ... })`, with options:
 
 ```js
 var defaults = {
-  animate: true, // whether to show the layout as it's running
+  animate: true, // Whether to show the layout as it's running
   ready: undefined, // Callback on layoutready
   stop: undefined, // Callback on layoutstop
   fit: true, // Reset viewport to fit default simulationBounds
@@ -61,10 +90,10 @@ var defaults = {
   // If it is set to -1.0 the amount of expansion is automatically
   // calculated based on the minDist, the aspect ratio and the
   // number of nodes
-  maxFruchtermanReingoldIterations: 50, // Maximum number of initial force-directed iterations
+  prelayout: { name: 'cose' }, // Layout options for the first phase
   maxExpandIterations: 4, // Maximum number of expanding iterations
   boundingBox: undefined, // Constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
-  randomize: false // uses random initial node positions on true
+  randomize: false // Uses random initial node positions on true
 };
 ```
 

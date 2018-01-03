@@ -20,6 +20,7 @@ var version;
 var browserifyOpts = {
   entries: './src/index.js',
   standalone: 'cytoscape-spread',
+  bundleExternal: false,
   debug: true
 };
 
@@ -28,14 +29,33 @@ var logError = function( err ){
   gutil.log( gutil.colors.red('Error in watch:'), gutil.colors.red(err) );
 };
 
-gulp.task('build', function(){
-  return browserify( browserifyOpts )
+var build = function( opts ){
+  opts = opts || {};
+
+  var o = {};
+
+  for( var i in browserifyOpts ){ o[i] = browserifyOpts[i]; }
+  for( var i in opts ){ o[i] = opts[i]; }
+
+  return browserify( o )
     .bundle()
     .on( 'error', logError )
     .pipe( source('cytoscape-spread.js') )
     .pipe( buffer() )
     .pipe( derequire() )
     .pipe( gulp.dest('.') )
+};
+
+gulp.task('build', build);
+
+gulp.task('build-prod', function(){
+  return build({ debug: false });
+});
+
+gulp.task('watch', function(next){
+  build();
+
+  gulp.watch('src/**', ['build']);
 });
 
 gulp.task('default', ['build'], function( next ){
@@ -43,7 +63,7 @@ gulp.task('default', ['build'], function( next ){
 });
 
 gulp.task('publish', [], function( next ){
-  runSequence('confver', 'lint', 'build', 'pkgver', 'push', 'tag', 'npm', next);
+  runSequence('confver', 'lint', 'build-prod', 'pkgver', 'push', 'tag', 'npm', next);
 });
 
 gulp.task('confver', ['version'], function(){
