@@ -98,11 +98,25 @@ var defaults = {
 ```
 
 
+## Build targets
+
+* `npm run test` : Run Mocha tests in `./test`
+* `npm run build` : Build `./src/**` into `cytoscape-spread.js` (debug source maps)
+* `npm run build:prod` : Build `./src/**` into `cytoscape-spread.js` (prod)
+* `npm run watch` : Automatically rebuild on source changes
+* `npm run lint` : Run eslint on the source
+
+N.b. all builds use babel, so modern ES features can be used in the `src`.
+
+
 ## Publishing instructions
 
 This project is set up to automatically be published to npm and bower.  To publish:
 
-1. Set the version number environment variable: `export VERSION=1.2.3`
-1. Publish: `gulp publish`
+1. Build the extension : `npm run build:release`
+1. Commit the build : `git commit -am "Build for release"`
+1. Bump the version number and tag: `npm version major|minor|patch`
+1. Push to origin: `git push && git push --tags`
+1. Publish to npm: `npm publish .`
 1. If publishing to bower for the first time, you'll need to run `bower register cytoscape-spread https://github.com/cytoscape/cytoscape.js-spread.git`
-1. Make a release on GitHub to automatically register a new Zenodo DOI
+1. [Make a new release](https://github.com/cytoscape/cytoscape.js-spread/releases/new) for Zenodo.

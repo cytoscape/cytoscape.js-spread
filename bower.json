@@ -15,7 +15,7 @@
   ],
   "keywords": [
     "cytoscape",
-    "cyext"
+    "cytoscape-extension"
   ],
   "license": "MIT",
   "dependencies": {
