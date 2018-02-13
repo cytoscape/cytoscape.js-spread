@@ -4,7 +4,7 @@ cytoscape-spread
 
 ## Description
 
-The Spread physics simulation layout for Cytoscape.js
+The Spread physics simulation layout for Cytoscape.js ([demo](https://cytoscape.github.io/cytoscape.js-spread/))
 
 The spread layout uses a force-directed physics simulation with several external libraries.  The layout tries to keep elements spread out evenly, making good use of constrained space.
 
