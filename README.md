@@ -42,7 +42,7 @@ var run = function(l){
 
 ## Dependencies
 
- * Cytoscape.js ^2.5.0 || ^3.0.0
+ * Cytoscape.js ^3.0.0
  * Weaver.js ^1.2.0
 
 
