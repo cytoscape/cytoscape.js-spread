@@ -4,7 +4,7 @@ cytoscape-spread
 
 ## Description
 
-The Spread physics simulation layout for Cytoscape.js
+The Spread physics simulation layout for Cytoscape.js ([demo](https://cytoscape.github.io/cytoscape.js-spread/))
 
 The spread layout uses a force-directed physics simulation with several external libraries.  The layout tries to keep elements spread out evenly, making good use of constrained space.
 
@@ -16,7 +16,7 @@ There are two phases to this layout:
 
 (2) Voronoi is used to spread out the nodes in the remaining space.
 
-Note that since you are composing layouts with phase (1), where `options.prelayout` is non-falsey, you will have more layout events.  For example, you will have more than one `layoutstop` event -- one for the Spread layout overall and one for the prelayout within phase (1) of Spread.  
+Note that since you are composing layouts with phase (1), where `options.prelayout` is non-falsey, you will have more layout events.  For example, you will have more than one `layoutstop` event -- one for the Spread layout overall and one for the prelayout within phase (1) of Spread.
 
 If you skip phase (1) with `options.prelayout` falsey, you will not get extra events within Spread.  You can use promise chaining with two layouts to get the same effect as running a layout in phase (1), i.e.:
 
@@ -101,8 +101,7 @@ var defaults = {
 ## Build targets
 
 * `npm run test` : Run Mocha tests in `./test`
-* `npm run build` : Build `./src/**` into `cytoscape-spread.js` (debug source maps)
-* `npm run build:prod` : Build `./src/**` into `cytoscape-spread.js` (prod)
+* `npm run build` : Build `./src/**` into `cytoscape-spread.js`
 * `npm run watch` : Automatically rebuild on source changes
 * `npm run lint` : Run eslint on the source
 
