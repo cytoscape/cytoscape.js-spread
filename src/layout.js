@@ -1,4 +1,4 @@
-var Thread;
+var Thread = require('weaverjs').Thread;
 
 var Voronoi = require('./rhill-voronoi-core');
 
@@ -484,8 +484,4 @@ SpreadLayout.prototype.destroy = function(){
   }
 };
 
-module.exports = function get( cytoscape, weaver ){
-  Thread = weaver.Thread;
-
-  return SpreadLayout;
-};
+module.exports = SpreadLayout;
