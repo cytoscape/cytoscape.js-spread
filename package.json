@@ -5,7 +5,7 @@
   "main": "cytoscape-spread.js",
   "scripts": {
     "postpublish": "run-s gh-pages",
-    "gh-pages": "gh-pages -d gh-pages",
+    "gh-pages": "gh-pages -d pages",
     "copyright": "update license",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "cross-env NODE_ENV=production webpack",
