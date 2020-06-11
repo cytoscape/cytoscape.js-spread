@@ -38,8 +38,8 @@ SpreadLayout.prototype.run = function() {
   if( bb.y2 === undefined ){ bb.y2 = bb.y1 + bb.h; }
   if( bb.h === undefined ){ bb.h = bb.y2 - bb.y1; }
 
-  var nodes = cy.nodes();
-  var edges = cy.edges();
+  const nodes = options.eles.nodes();
+  const edges = options.eles.edges();
   var cWidth = cy.width();
   var cHeight = cy.height();
   var simulationBounds = bb;
